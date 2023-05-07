@@ -517,7 +517,16 @@ static int32_t parse_req(
 
 ```
 
-# 数据结构
+## 2.序列化与反序列化
+
+使用type-length-value(TLV)的格式，这是常用的序列化方法，其有几点优势：
+
+- 像Json和XML一样易于人类直接阅读理解
+- 可以编码任意的嵌套数据
+
+
+
+# 2.数据结构
 
 ## 1.Hashtable
 
@@ -711,6 +720,8 @@ HNode *hm_pop(
     return NULL;
 }
 ```
+
+## 2.AVL树
 
 
 
