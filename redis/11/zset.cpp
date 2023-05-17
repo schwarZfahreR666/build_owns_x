@@ -52,9 +52,11 @@ static void tree_add(ZSet *zset, ZNode *node) {
     AVLNode *cur = zset->tree;
     while (true) {
         AVLNode **from = zless(&node->tree, cur) ? &cur->left : &cur->right;
+        //二分查找，如果节点为空则在此插入
         if (!*from) {
             *from = &node->tree;
             node->tree.parent = cur;
+            //插入后需要平衡树
             zset->tree = avl_fix(&node->tree);
             break;
         }
@@ -93,7 +95,7 @@ struct HKey {
     const char *name = NULL;
     size_t len = 0;
 };
-
+//比较两个HNode name是否相同
 static bool hcmp(HNode *node, HNode *key) {
     if (node->hcode != key->hcode) {
         return false;
@@ -116,6 +118,7 @@ ZNode *zset_lookup(ZSet *zset, const char *name, size_t len) {
     key.node.hcode = str_hash((uint8_t *)name, len);
     key.name = name;
     key.len = len;
+    //从hashtable中查找
     HNode *found = hm_lookup(&zset->hmap, &key.node, &hcmp);
     if (!found) {
         return NULL;
@@ -146,6 +149,7 @@ ZNode *zset_pop(ZSet *zset, const char *name, size_t len) {
 
 // find the (score, name) tuple that is greater or equal to the argument,
 // then offset relative to it.
+//查找大于等于目标score的第offset个节点
 ZNode *zset_query(
     ZSet *zset, double score, const char *name, size_t len, int64_t offset)
 {

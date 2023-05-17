@@ -723,7 +723,164 @@ HNode *hm_pop(
 
 ## 2.AVL树
 
+AVL树是有序集合的常用实现方法，redis中实际使用的是跳表+hashmap。
 
+AVL树会限制左右子树的高度差在1之内，当插入和删除节点时，高度差可以短暂的为2，但是可以通过自旋调整过来。[AVL自旋介绍](obsidian://advanced-uri?vault=note&filepath=algorithm%252Fdata_struct_note.md&heading=9.平衡二叉树(AVL树))
+
+```c
+struct AVLNode {
+    uint32_t depth = 0;  //树的高度
+    uint32_t cnt = 0;  //树的size
+    AVLNode *left = NULL;
+    AVLNode *right = NULL;
+    AVLNode *parent = NULL;
+};
+
+static void avl_init(AVLNode *node) {
+    node->depth = 1;
+    node->cnt = 1;
+    node->left = node->right = node->parent = NULL;
+}
+```
+
+
+
+```c
+static AVLNode *rot_left(AVLNode *node) {
+    AVLNode *new_node = node->right;  //new_node = d
+    if (new_node->left) { //如果new_node有左孩子，该节点会成为node的右孩子
+        new_node->left->parent = node;
+    }
+    node->right = new_node->left;
+    new_node->left = node;
+    new_node->parent = node->parent;
+    node->parent = new_node;
+    avl_update(node);
+    avl_update(new_node);
+    return new_node;
+}
+
+  b           d
+ / \         /
+a   d  ==>  b
+   /       / \
+  c       a   c   左旋操作
+
+static AVLNode *rot_right(AVLNode *node) {
+    AVLNode *new_node = node->left;
+    if (new_node->right) {
+        new_node->right->parent = node;
+    }
+    node->left = new_node->right;
+    new_node->right = node;
+    new_node->parent = node->parent;
+    node->parent = new_node;
+    avl_update(node);
+    avl_update(new_node);
+    return new_node;
+}
+```
+
+```c
+// the left subtree is too deep
+static AVLNode *avl_fix_left(AVLNode *root) {
+  //LR型进入if，LL型不进入
+    if (avl_depth(root->left->left) < avl_depth(root->left->right)) {
+        root->left = rot_left(root->left);
+    }
+    return rot_right(root);
+}
+
+// the right subtree is too deep
+static AVLNode *avl_fix_right(AVLNode *root) {
+  //RL型进入if，RR型不进入
+    if (avl_depth(root->right->right) < avl_depth(root->right->left)) {
+        root->right = rot_right(root->right);
+    }
+    return rot_left(root);
+}
+```
+
+
+
+```c
+// fix imbalanced nodes and maintain invariants until the root is reached
+static AVLNode *avl_fix(AVLNode *node) {
+    while (true) {
+        avl_update(node);
+        uint32_t l = avl_depth(node->left);
+        uint32_t r = avl_depth(node->right);
+        AVLNode **from = NULL;
+        if (node->parent) {
+          //node如果是左节点，则from指向左节点，否则指向右节点（不指向node是因为node会改变）
+            from = (node->parent->left == node)
+                ? &node->parent->left : &node->parent->right;
+        }
+      //深度差为2时才调整，按照LR、LL和RL、RR处理
+        if (l == r + 2) {
+            node = avl_fix_left(node);
+        } else if (l + 2 == r) {
+            node = avl_fix_right(node);
+        }
+        if (!from) {
+            return node;
+        }
+        *from = node;
+        node = node->parent;
+    }
+}
+```
+
+该函数会从最初被影响的节点开始处理，一直处理到root节点。因为root节点可能会更换，该函数会返回新的根结点，from是为了在左、右旋之后，调整原node的父节点指向新的node。
+
+```c
+static AVLNode *avl_del(AVLNode *node) {
+    if (node->right == NULL) {
+        // no right subtree, replace the node with the left subtree
+        // link the left subtree to the parent
+      //没有右节点，则把左节点代替其位置即可
+        AVLNode *parent = node->parent;
+        if (node->left) {
+            node->left->parent = parent;
+        }
+        if (parent) {
+            // attach the left subtree to the parent
+            (parent->left == node ? parent->left : parent->right) = node->left;
+            return avl_fix(parent);
+        } else {
+            // removing root?
+            return node->left;
+        }
+    } else {
+        // swap the node with its next sibling
+      //用右子树中最小的替换删除的节点
+      //该删除方法work的前提是本例特殊的数据结构使用方式，数据Entry包括AVL节点，这样做保留了node的AVL结构，但是用的是右子树中最小节点的内存，Entry指向的是该最小节点
+        AVLNode *victim = node->right;
+        while (victim->left) {
+            victim = victim->left;
+        }
+        AVLNode *root = avl_del(victim);
+
+        *victim = *node;
+        if (victim->left) {
+            victim->left->parent = victim;
+        }
+        if (victim->right) {
+            victim->right->parent = victim;
+        }
+        AVLNode *parent = node->parent;
+        if (parent) {
+            (parent->left == node ? parent->left : parent->right) = victim;
+            return root;
+        } else {
+            // removing root?
+            return victim;
+        }
+    }
+}
+```
+
+如果目标节点没有子树，只需将其直接删除；如果它有一个子树，将节点替换为该子树。当节点同时具有两个子树时，就会出现问题，我们不能直接删除它。
 
 ## 数据结构的使用
 
@@ -788,4 +945,6 @@ static bool entry_eq(HNode *lhs, HNode *rhs) {
     return lhs->hcode == rhs->hcode && le->key == re->key;
 }
 ```
+
+
 

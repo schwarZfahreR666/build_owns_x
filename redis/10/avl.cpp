@@ -86,8 +86,7 @@ static AVLNode *avl_fix(AVLNode *node) {
         uint32_t r = avl_depth(node->right);
         AVLNode **from = NULL;
         if (node->parent) {
-            from = (node->parent->left == node)
-                ? &node->parent->left : &node->parent->right;
+            from = (node->parent->left == node)            ? &node->parent->left : &node->parent->right;
         }
         if (l == r + 2) {
             node = avl_fix_left(node);

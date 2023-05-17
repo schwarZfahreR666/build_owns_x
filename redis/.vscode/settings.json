@@ -2,6 +2,26 @@
     "files.associations": {
         "random": "cpp",
         "ratio": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "__functional_base": "cpp",
+        "__functional_base_03": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp",
+        "__tuple": "cpp",
+        "algorithm": "cpp",
+        "array": "cpp",
+        "chrono": "cpp",
+        "compare": "cpp",
+        "type_traits": "cpp",
+        "filesystem": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "cstddef": "cpp",
+        "*.inc": "cpp",
+        "set": "cpp"
     }
 }
