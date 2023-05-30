@@ -138,7 +138,7 @@ void move_end_pos(void)
 
 size_t size(void)
 {
-    return m_xst_queue_size;
+    return atomic_load(&m_xst_queue_size);
 }
 
 /**
@@ -185,8 +185,8 @@ void push(YNode *xemt_value)
     m_chk_back_ptr = m_chk_end_ptr;
     m_xst_back_pos = m_xst_end_pos;
 
-    atomic_fetch_add(&m_xst_queue_size, 1);
     move_end_pos();
+    atomic_fetch_add(&m_xst_queue_size, 1);
 }
 
 /**
