@@ -11,6 +11,7 @@
 typedef struct HNODE {
     struct HNODE *next;
     uint64_t hcode;
+    char* key;
 } HNode;
 
 // a simple fixed-sized hashtable
@@ -28,9 +29,10 @@ typedef struct HMap {
     size_t resizing_pos;
 } HMap;
 
-uint64_t str_hash(const uint8_t *data, size_t len);
+uint64_t str_hash(const char *data, size_t len);
 HNode *hm_lookup(HMap *hmap, HNode *key, int (*cmp)(HNode *, HNode *));
 void hm_insert(HMap *hmap, HNode *node);
 HNode *hm_pop(HMap *hmap, HNode *key, int (*cmp)(HNode *, HNode *));
 size_t hm_size(HMap *hmap);
+void hm_init(HMap** hmap);
 void hm_destroy(HMap *hmap);

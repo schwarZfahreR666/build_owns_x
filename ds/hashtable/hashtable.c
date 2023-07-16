@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "hashtable.h"
-#include <stdio.h>
 
 
 // n must be a power of 2
@@ -12,7 +11,7 @@ static void h_init(HTab **htab, size_t n) {
     (*htab)->size = 0;
 }
 
-uint64_t str_hash(const uint8_t *data, size_t len) {
+uint64_t str_hash(const char *data, size_t len) {
     uint32_t h = 0x811C9DC5;
     for (size_t i = 0; i < len; i++) {
         h = (h + data[i]) * 0x01000193;
@@ -158,42 +157,4 @@ void hm_destroy(HMap *hmap) {
     free(hmap->ht1->tab);
     free(hmap->ht2->tab);
     free(hmap);
-}
-
-int cmp(HNode* h1,HNode* h2){
-    if(h1->hcode <= h2->hcode) return 1;
-    return 0;
-}
-
-int main(){
-    HMap* hmap = NULL;
-    hm_init(&hmap);
-
-    HNode* hnode = NULL;
-
-    for(int i=0;i<100000;i++){
-        hnode = (HNode*)malloc(sizeof(HNode));
-        hnode->next = NULL;
-        hnode->hcode = i;
-        hm_insert(hmap,hnode);
-    }
-
-    for(int i=0;i<100000;i++){
-        hnode = (HNode*)malloc(sizeof(HNode));
-        hnode->next = NULL;
-        hnode->hcode = i;
-
-        HNode* ret = hm_lookup(hmap, hnode, cmp);
-        printf("lookup %llu ,get %llu\n", hnode->hcode, ret->hcode);
-
-        HNode* res = hm_pop(hmap, hnode,cmp);
-        printf("pop %llu\n", res->hcode);
-
-        ret = hm_lookup(hmap, hnode, cmp);
-        if(ret != NULL) printf("2nd lookup %llu ,get %llu\n", hnode->hcode, ret->hcode);
-    }
-
-
-    hm_destroy(hmap);
-
 }
